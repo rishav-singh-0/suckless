@@ -74,6 +74,7 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *termcmd[]  = { TERMINAL, NULL };
 
+#include "focusurgent.c"
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	TAGKEYS(                        XK_1,                      0)
@@ -114,6 +115,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_period, tagmon,         {.i = +1 } },
 	{ MODKEY|ShiftMask,             XK_n,      show,           {0} },
 	{ MODKEY,                       XK_n,      hide,           {0} },
+	{ MODKEY,                       XK_u,      focusurgent,    {0} },
 	{ MODKEY,						XK_q,	   killclient,	   {0} },
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
 	{ MODKEY,                       XK_Left,   viewtoleft,     {0} },
