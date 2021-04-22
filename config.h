@@ -8,6 +8,8 @@
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
+static const int startwithgaps[]    = { 1 };	/* 1 means gaps are used by default, this can be customized for each tag */
+static const unsigned int gappx[]   = { 10 };   /* default gap between windows in pixels, this can be customized for each tag */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
@@ -33,9 +35,9 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class      instance    title       tags mask     isfloating canfocus   monitor */
-	{ "Gimp",     NULL,       NULL,       0,            1,         1,         -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,         1,         -1 },
+	/* class      instance    title       tags mask     isfloating canfocus	ispermanant   monitor */
+	{ "Gimp",     NULL,       NULL,       0,            1,         1,	0,         -1 },
+	{ "Firefox",  NULL,       NULL,       1 << 8,       0,         1,	0,         -1 },
 };
 
 /* layout(s) */
@@ -116,6 +118,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_n,      show,           {0} },
 	{ MODKEY,                       XK_n,      hide,           {0} },
 	{ MODKEY,                       XK_u,      focusurgent,    {0} },
+	{ MODKEY,                       XK_s,      togglesticky,   {0} },
 	{ MODKEY,						XK_q,	   killclient,	   {0} },
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
 	{ MODKEY,                       XK_Left,   viewtoleft,     {0} },
@@ -127,6 +130,10 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,		XK_0,		tag,		{.ui = ~0 } },
 	{ MODKEY,				XK_Tab,		view,		{0} },
 	{ MODKEY,				XK_backslash,		view,		{0} },
+	{ MODKEY,                       XK_x,  setgaps,        {.i = -5 } },
+	{ MODKEY,                       XK_z,  setgaps,        {.i = +5 } },
+	{ MODKEY|ShiftMask,             XK_x,  setgaps,        {.i = GAP_RESET } },
+	{ MODKEY|ShiftMask,             XK_z,  setgaps,        {.i = GAP_TOGGLE} },
 
 	// Music
 	{ MODKEY,				XK_minus,			spawn,		SHCMD("pamixer --allow-boost -d 5; kill -44 $(pidof dwmblocks)") },
