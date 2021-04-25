@@ -150,7 +150,7 @@ typedef struct {
 	unsigned int tags;
 	int isfloating;
 	int ispermanant;
-    int canfocus;
+    int canfocus ;
 	int monitor;
 } Rule;
 
@@ -546,8 +546,23 @@ buttonpress(XEvent *e)
 					s--;
 				}
 			}
-		} else
+		}
+		else {
+			x += blw;
+			c = m->clients;
+
+			if (c) {
+				do {
+					if (!ISVISIBLE(c))
+						continue;
+					else
+						x += (1.0 / (double)m->bt) * m->btw;
+				} while (ev->x > x && (c = c->next));
+
 				click = ClkWinTitle;
+				arg.v = c;
+			}
+		}
 	} else if ((c = wintoclient(ev->window))) {
 		focus(c);
 		restack(selmon);
