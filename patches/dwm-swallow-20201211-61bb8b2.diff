@@ -1,76 +1,59 @@
-From f0cdf40e0a7126838d051eb84d84b91421b771d6 Mon Sep 17 00:00:00 2001
-From: 0x1bi <ben@0x1bi.net>
-Date: Fri, 11 Dec 2020 10:16:25 -0500
-Subject: [PATCH] fix swallow for openbsd
+From 16cfa88ca5ee5f93f62953cc5ed2355417d51420 Mon Sep 17 00:00:00 2001
+From: Joshua Haase <hahj87@gmail.com>
+Date: Sat, 9 Sep 2017 17:07:40 -0500
+Subject: [PATCH] Apply swallow patch.
 
 ---
- config.def.h |   9 +-
- config.mk    |   3 +-
- dwm.c        | 235 +++++++++++++++++++++++++++++++++++++++++++++++++--
- 3 files changed, 237 insertions(+), 10 deletions(-)
+ config.def.h |   7 ++-
+ config.mk    |   2 +-
+ dwm.c        | 190 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
+ 3 files changed, 190 insertions(+), 9 deletions(-)
 
 diff --git a/config.def.h b/config.def.h
-index 1c0b587..fe51476 100644
+index a9ac303..2d26a23 100644
 --- a/config.def.h
 +++ b/config.def.h
-@@ -3,6 +3,7 @@
- /* appearance */
- static const unsigned int borderpx  = 1;        /* border pixel of windows */
- static const unsigned int snap      = 32;       /* snap pixel */
-+static const int swallowfloating    = 0;        /* 1 means swallow floating windows by default */
- static const int showbar            = 1;        /* 0 means no bar */
- static const int topbar             = 1;        /* 0 means bottom bar */
- static const char *fonts[]          = { "monospace:size=10" };
-@@ -26,9 +27,11 @@ static const Rule rules[] = {
+@@ -26,9 +26,10 @@ static const Rule rules[] = {
  	 *	WM_CLASS(STRING) = instance, class
  	 *	WM_NAME(STRING) = title
  	 */
 -	/* class      instance    title       tags mask     isfloating   monitor */
 -	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
 -	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
-+	/* class     instance  title           tags mask  isfloating  isterminal  noswallow  monitor */
-+	{ "Gimp",    NULL,     NULL,           0,         1,          0,           0,        -1 },
-+	{ "Firefox", NULL,     NULL,           1 << 8,    0,          0,          -1,        -1 },
-+	{ "St",      NULL,     NULL,           0,         0,          1,           0,        -1 },
-+	{ NULL,      NULL,     "Event Tester", 0,         0,          0,           1,        -1 }, /* xev */
++	/* class      instance    title       tags mask     isfloating   isterminal noswallow monitor */
++	{ "Gimp",     NULL,       NULL,       0,            1,           0,         0,        -1 },
++	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           0,         0,        -1 },
++	{ "st",       NULL,       NULL,       0,            0,           1,         1,        -1 },
  };
  
  /* layout(s) */
 diff --git a/config.mk b/config.mk
-index 7084c33..ff9e508 100644
+index 80dc936..5ed14e3 100644
 --- a/config.mk
 +++ b/config.mk
-@@ -19,10 +19,11 @@ FREETYPELIBS = -lfontconfig -lXft
- FREETYPEINC = /usr/include/freetype2
- # OpenBSD (uncomment)
- #FREETYPEINC = ${X11INC}/freetype2
-+#KVMLIB = -lkvm
+@@ -22,7 +22,7 @@ FREETYPEINC = /usr/include/freetype2
  
  # includes and libs
  INCS = -I${X11INC} -I${FREETYPEINC}
 -LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS}
-+LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS} -lX11-xcb -lxcb -lxcb-res ${KVMLIB}
++LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS} -lX11-xcb -lxcb -lxcb-res
  
  # flags
- CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=200809L -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
+ CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
 diff --git a/dwm.c b/dwm.c
-index 664c527..0b20086 100644
+index a5ce993..20b635b 100644
 --- a/dwm.c
 +++ b/dwm.c
-@@ -40,6 +40,12 @@
+@@ -40,6 +40,8 @@
  #include <X11/extensions/Xinerama.h>
  #endif /* XINERAMA */
  #include <X11/Xft/Xft.h>
 +#include <X11/Xlib-xcb.h>
 +#include <xcb/res.h>
-+#ifdef __OpenBSD__
-+#include <sys/sysctl.h>
-+#include <kvm.h>
-+#endif /* __OpenBSD */
  
  #include "drw.h"
  #include "util.h"
-@@ -92,9 +98,11 @@ struct Client {
+@@ -93,9 +95,11 @@ struct Client {
  	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
  	int bw, oldbw;
  	unsigned int tags;
@@ -83,7 +66,7 @@ index 664c527..0b20086 100644
  	Monitor *mon;
  	Window win;
  };
-@@ -138,6 +146,8 @@ typedef struct {
+@@ -139,6 +143,8 @@ typedef struct {
  	const char *title;
  	unsigned int tags;
  	int isfloating;
@@ -92,7 +75,7 @@ index 664c527..0b20086 100644
  	int monitor;
  } Rule;
  
-@@ -235,6 +245,12 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
+@@ -235,6 +241,13 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
  static int xerrorstart(Display *dpy, XErrorEvent *ee);
  static void zoom(const Arg *arg);
  
@@ -102,10 +85,11 @@ index 664c527..0b20086 100644
 +static Client *termforwin(const Client *c);
 +static pid_t winpid(Window w);
 +
++
  /* variables */
  static const char broken[] = "broken";
  static char stext[256];
-@@ -269,6 +285,8 @@ static Drw *drw;
+@@ -269,6 +282,8 @@ static Drw *drw;
  static Monitor *mons, *selmon;
  static Window root, wmcheckwin;
  
@@ -114,26 +98,22 @@ index 664c527..0b20086 100644
  /* configuration, allows nested code to access above variables */
  #include "config.h"
  
-@@ -298,6 +316,8 @@ applyrules(Client *c)
+@@ -298,6 +313,7 @@ applyrules(Client *c)
  		&& (!r->class || strstr(class, r->class))
  		&& (!r->instance || strstr(instance, r->instance)))
  		{
 +			c->isterminal = r->isterminal;
-+			c->noswallow  = r->noswallow;
  			c->isfloating = r->isfloating;
  			c->tags |= r->tags;
  			for (m = mons; m && m->num != r->monitor; m = m->next);
-@@ -414,6 +434,53 @@ attachstack(Client *c)
+@@ -414,6 +430,47 @@ attachstack(Client *c)
  	c->mon->stack = c;
  }
  
 +void
 +swallow(Client *p, Client *c)
 +{
-+
 +	if (c->noswallow || c->isterminal)
-+		return;
-+	if (c->noswallow && !swallowfloating && c->isfloating)
 +		return;
 +
 +	detach(c);
@@ -149,8 +129,8 @@ index 664c527..0b20086 100644
 +	p->win = c->win;
 +	c->win = w;
 +	updatetitle(p);
-+	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
 +	arrange(p->mon);
++	XMoveResizeWindow(dpy, p->win, p->x, p->y, p->w, p->h);
 +	configure(p);
 +	updateclientlist();
 +}
@@ -163,21 +143,18 @@ index 664c527..0b20086 100644
 +	free(c->swallowing);
 +	c->swallowing = NULL;
 +
-+	/* unfullscreen the client */
-+	setfullscreen(c, 0);
 +	updatetitle(c);
 +	arrange(c->mon);
 +	XMapWindow(dpy, c->win);
 +	XMoveResizeWindow(dpy, c->win, c->x, c->y, c->w, c->h);
++	configure(c);
 +	setclientstate(c, NormalState);
-+	focus(NULL);
-+	arrange(c->mon);
 +}
 +
  void
  buttonpress(XEvent *e)
  {
-@@ -653,6 +720,9 @@ destroynotify(XEvent *e)
+@@ -653,6 +709,9 @@ destroynotify(XEvent *e)
  
  	if ((c = wintoclient(ev->window)))
  		unmanage(c, 1);
@@ -187,7 +164,7 @@ index 664c527..0b20086 100644
  }
  
  void
-@@ -1018,12 +1088,13 @@ killclient(const Arg *arg)
+@@ -1019,12 +1078,13 @@ killclient(const Arg *arg)
  void
  manage(Window w, XWindowAttributes *wa)
  {
@@ -202,7 +179,7 @@ index 664c527..0b20086 100644
  	/* geometry */
  	c->x = c->oldx = wa->x;
  	c->y = c->oldy = wa->y;
-@@ -1038,6 +1109,7 @@ manage(Window w, XWindowAttributes *wa)
+@@ -1039,6 +1099,7 @@ manage(Window w, XWindowAttributes *wa)
  	} else {
  		c->mon = selmon;
  		applyrules(c);
@@ -210,7 +187,7 @@ index 664c527..0b20086 100644
  	}
  
  	if (c->x + WIDTH(c) > c->mon->mx + c->mon->mw)
-@@ -1074,6 +1146,8 @@ manage(Window w, XWindowAttributes *wa)
+@@ -1075,6 +1136,8 @@ manage(Window w, XWindowAttributes *wa)
  	c->mon->sel = c;
  	arrange(c->mon);
  	XMapWindow(dpy, c->win);
@@ -219,7 +196,7 @@ index 664c527..0b20086 100644
  	focus(NULL);
  }
  
-@@ -1768,6 +1842,20 @@ unmanage(Client *c, int destroyed)
+@@ -1767,6 +1830,20 @@ unmanage(Client *c, int destroyed)
  	Monitor *m = c->mon;
  	XWindowChanges wc;
  
@@ -233,14 +210,14 @@ index 664c527..0b20086 100644
 +		free(s->swallowing);
 +		s->swallowing = NULL;
 +		arrange(m);
-+		focus(NULL);
++        focus(NULL);
 +		return;
 +	}
 +
  	detach(c);
  	detachstack(c);
  	if (!destroyed) {
-@@ -1782,9 +1870,12 @@ unmanage(Client *c, int destroyed)
+@@ -1781,9 +1858,12 @@ unmanage(Client *c, int destroyed)
  		XUngrabServer(dpy);
  	}
  	free(c);
@@ -256,17 +233,15 @@ index 664c527..0b20086 100644
  }
  
  void
-@@ -2047,6 +2138,136 @@ view(const Arg *arg)
+@@ -2045,6 +2125,103 @@ view(const Arg *arg)
  	arrange(selmon);
  }
  
 +pid_t
 +winpid(Window w)
 +{
-+
 +	pid_t result = 0;
 +
-+#ifdef __linux__
 +	xcb_res_client_id_spec_t spec = {0};
 +	spec.client = w;
 +	spec.mask = XCB_RES_CLIENT_ID_MASK_LOCAL_CLIENT_PID;
@@ -292,24 +267,6 @@ index 664c527..0b20086 100644
 +
 +	if (result == (pid_t)-1)
 +		result = 0;
-+
-+#endif /* __linux__ */
-+
-+#ifdef __OpenBSD__
-+        Atom type;
-+        int format;
-+        unsigned long len, bytes;
-+        unsigned char *prop;
-+        pid_t ret;
-+
-+        if (XGetWindowProperty(dpy, w, XInternAtom(dpy, "_NET_WM_PID", 0), 0, 1, False, AnyPropertyType, &type, &format, &len, &bytes, &prop) != Success || !prop)
-+               return 0;
-+
-+        ret = *(pid_t*)prop;
-+        XFree(prop);
-+        result = ret;
-+
-+#endif /* __OpenBSD__ */
 +	return result;
 +}
 +
@@ -328,20 +285,7 @@ index 664c527..0b20086 100644
 +
 +	fscanf(f, "%*u %*s %*c %u", &v);
 +	fclose(f);
-+#endif /* __linux__*/
-+
-+#ifdef __OpenBSD__
-+	int n;
-+	kvm_t *kd;
-+	struct kinfo_proc *kp;
-+
-+	kd = kvm_openfiles(NULL, NULL, NULL, KVM_NO_FILES, NULL);
-+	if (!kd)
-+		return 0;
-+
-+	kp = kvm_getprocs(kd, KERN_PROC_PID, p, sizeof(*kp), &n);
-+	v = kp->p_ppid;
-+#endif /* __OpenBSD__ */
++#endif /* __linux__ */
 +
 +	return (pid_t)v;
 +}
@@ -393,7 +337,7 @@ index 664c527..0b20086 100644
  Client *
  wintoclient(Window w)
  {
-@@ -2138,10 +2359,12 @@ main(int argc, char *argv[])
+@@ -2136,6 +2313,8 @@ main(int argc, char *argv[])
  		fputs("warning: no locale support\n", stderr);
  	if (!(dpy = XOpenDisplay(NULL)))
  		die("dwm: cannot open display");
@@ -401,12 +345,6 @@ index 664c527..0b20086 100644
 +		die("dwm: cannot get xcb connection\n");
  	checkotherwm();
  	setup();
- #ifdef __OpenBSD__
--	if (pledge("stdio rpath proc exec", NULL) == -1)
-+	if (pledge("stdio rpath proc exec ps", NULL) == -1)
- 		die("pledge");
- #endif /* __OpenBSD__ */
  	scan();
 -- 
-2.28.0
-
+2.14.1
