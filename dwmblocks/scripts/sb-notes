@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# The clickable help menu. Middle click to restart wm.
+
+# If dwm is running, use dwm's readme and restart.
+pidof dwm >/dev/null &&
+	NOTES=/home/rishav/.local/share/help/notes.md &&
+	TODO=/home/rishav/.local/share/help/todo.md
+
+case $BLOCK_BUTTON in
+	1) alacritty -e  nvim "${NOTES:-${XDG_DATA_HOME:-$HOME/.local/share/help}/notes.md}" ;;
+	2) alacritty -e  nvim "${TODO:-${XDG_DATA_HOME:-$HOME/.local/share/help}/todo.md}" ;;
+	3) notify-send "📔 Notes module" "\- Left click to open notes editor.
+- Middle click to open todo editor." ;;
+	6) "st" -e "$EDITOR" "$0" ;;
+esac; echo "📔"
