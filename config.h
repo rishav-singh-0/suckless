@@ -22,7 +22,7 @@ static const int showsystray        = 1;     /* 0 means no systray */
 
 static int showbar            = 1;        /* 0 means no bar */
 static int topbar             = 1;        /* 0 means bottom bar */
-static char *fonts[]          = { "NimbusSans:size=16", "JoyPixels:pixelsize=15:antialias=true:autohint=true" };
+static char *fonts[]          = { "ComicMono:size=16", "JoyPixels:pixelsize=15:antialias=true:autohint=true" };
 static char normbgcolor[]           = "#222222";
 static char normbordercolor[]       = "#444444";
 static char normfgcolor[]           = "#bbbbbb";
@@ -255,7 +255,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,	XK_space,	togglefloating,	{0} },
 
 	{ 0,				XK_Print,	spawn,		SHCMD("maimpick") },
-	{ ShiftMask,			XK_Print,	spawn,		SHCMD("maimpick") },
+	{ ShiftMask,			XK_Print,	spawn,		SHCMD("flameshot gui") },
 	/* { MODKEY,			XK_Print,	spawn,		SHCMD("dmenurecord") }, */
 	/* { MODKEY|ShiftMask,		XK_Print,	spawn,		SHCMD("dmenurecord kill") }, */
 	/* { MODKEY,			XK_Delete,	spawn,		SHCMD("dmenurecord kill") }, */
@@ -286,8 +286,8 @@ static Key keys[] = {
 	{ 0, XF86XK_TouchpadToggle,	spawn,		SHCMD("(synclient | grep 'TouchpadOff.*1' && synclient TouchpadOff=0) || synclient TouchpadOff=1") },
 	{ 0, XF86XK_TouchpadOff,	spawn,		SHCMD("xinput disable 14") },
 	{ 0, XF86XK_TouchpadOn,		spawn,		SHCMD("xinput enable 14") },
-	{ 0, XF86XK_MonBrightnessUp,	spawn,		SHCMD("xbacklight -inc 5") },
-	{ 0, XF86XK_MonBrightnessDown,	spawn,		SHCMD("xbacklight -dec 5") },
+	{ 0, XF86XK_MonBrightnessUp,	spawn,		SHCMD("xbacklight -inc 2") },
+	{ 0, XF86XK_MonBrightnessDown,	spawn,		SHCMD("xbacklight -dec 2") },
 
 	/* { MODKEY|Mod4Mask,              XK_h,      incrgaps,       {.i = +1 } }, */
 	/* { MODKEY|Mod4Mask,              XK_l,      incrgaps,       {.i = -1 } }, */

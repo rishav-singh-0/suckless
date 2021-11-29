@@ -14,6 +14,7 @@
 - Lock Screen: slock
 - Network Manager: nmtui
 - TaskSwitcher: skippy-xd
+- Screenshot and Annoate: flameshot
 
 # KeyBindings
 
@@ -76,20 +77,22 @@
 - ] : seek 10 sec forward
 - shift [ : seek 60 sec back
 - shift ] : seek 60 sec forward
+- ctrl shift m : mute pulseaudio
 
 ## Launch
 
 - return : Terminal
 - c : Browser
-- r : File Manager
+- r : Ranger File Manager
+- e : GUI File Manager
 - shift r : System Manager
 - w : change wallpaper
 - shift w : network manager
-- e : Email
+- shift e : Email
 - d : dmenu
 - shift space : passmenu
+- m : window overview
 - shift m : music player
-- ctrl shift m : mute pulseaudio
 
 ## Function Keys
 
