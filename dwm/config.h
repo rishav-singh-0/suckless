@@ -22,7 +22,7 @@ static const int showsystray        = 1;     /* 0 means no systray */
 
 static int showbar            = 1;        /* 0 means no bar */
 static int topbar             = 1;        /* 0 means bottom bar */
-static char *fonts[]          = { "ComicMono:size=16", "JoyPixels:pixelsize=15:antialias=true:autohint=true" };
+static char *fonts[]          = { "FuraMono Nerd Font:size=17", "JoyPixels:pixelsize=14:antialias=true:autohint=true" };
 static char normbgcolor[]           = "#222222";
 static char normbordercolor[]       = "#444444";
 static char normfgcolor[]           = "#bbbbbb";
@@ -170,11 +170,13 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,	XK_q,		spawn,		SHCMD("sysact") },
 	{ MODKEY,			XK_c,		spawn,		SHCMD(BROWSER) },
 	{ MODKEY,			XK_w,		spawn,		SHCMD("wall_nitrogen") },
-	{ MODKEY|ShiftMask,	XK_w,		spawn,		SHCMD(TERMINAL " -e sudo nmtui") },
+	{ MODKEY|ShiftMask,	XK_b,		spawn,		SHCMD("dmenu-bluetooth") },
+	{ MODKEY|ShiftMask,	XK_a,		spawn,		SHCMD("open-2fa") },
+	{ MODKEY|ShiftMask,	XK_w,		spawn,		SHCMD(TERMINAL " -e nmtui") },
 	{ MODKEY,			XK_e,		spawn,		SHCMD("pcmanfm") },
 	{ MODKEY|ShiftMask,	XK_e,		spawn,		SHCMD(TERMINAL " -e neomutt ; pkill -RTMIN+12 dwmblocks; rmdir ~/.abook") },
 	{ MODKEY,			XK_m,		spawn,		SHCMD("skippy-xd-runner") },
-	/* { MODKEY|ShiftMask,	XK_e,		spawn,		SHCMD(TERMINAL " -e abook -C ~/.config/abook/abookrc --datafile ~/.config/abook/addressbook") }, */
+	{ MODKEY|ShiftMask,	XK_c,		spawn,		SHCMD("clipster -s -c") }, /* clipboard manager */
 	{ MODKEY,			XK_r,		spawn,		SHCMD(TERMINAL " -e ranger") },
 	{ MODKEY|ShiftMask,	XK_r,		spawn,		SHCMD(TERMINAL " -e htop") },
 	{ MODKEY,			XK_t,		setlayout,	{.v = &layouts[0]} }, /* tile */
@@ -256,6 +258,7 @@ static Key keys[] = {
 
 	{ 0,				XK_Print,	spawn,		SHCMD("maimpick") },
 	{ ShiftMask,			XK_Print,	spawn,		SHCMD("flameshot gui") },
+	{ MODKEY,			XK_Print,	spawn,		SHCMD("ocr-clip") },
 	/* { MODKEY,			XK_Print,	spawn,		SHCMD("dmenurecord") }, */
 	/* { MODKEY|ShiftMask,		XK_Print,	spawn,		SHCMD("dmenurecord kill") }, */
 	/* { MODKEY,			XK_Delete,	spawn,		SHCMD("dmenurecord kill") }, */
